@@ -1,4 +1,8 @@
 package com.acme.subs.devices.dto;
 
-public class RegisterDeviceRequest {
-}
+import jakarta.validation.constraints.NotBlank;
+
+public record RegisterDeviceRequest(
+        @NotBlank String platform,
+        @NotBlank String fcmToken
+) {}

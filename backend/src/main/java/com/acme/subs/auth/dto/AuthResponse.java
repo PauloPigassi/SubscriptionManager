@@ -1,4 +1,10 @@
 package com.acme.subs.auth.dto;
 
-public class AuthResponse {
-}
+import java.util.UUID;
+
+public record AuthResponse(
+        String accessToken,
+        UUID userId,
+        String email,
+        String plan
+) {}

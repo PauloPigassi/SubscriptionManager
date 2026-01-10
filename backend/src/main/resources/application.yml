@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/subsdb
+    username: subs
+    password: subs
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+
+app:
+  jwt:
+    secret: "CHANGE_ME_TO_A_LONG_RANDOM_SECRET_64+"
+    issuer: "subs-app"
+    accessTokenMinutes: 60
+  scheduler:
+    horizonDays: 30
+    batchSize: 500
+  firebase:
+    enabled: false
+    serviceAccountPath: "classpath:firebase-service-account.json" # coloque o arquivo depois
