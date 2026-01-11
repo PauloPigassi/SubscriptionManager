@@ -116,10 +116,24 @@
     </dependencies>
 
     <build>
+        <sourceDirectory>backend/src/main/java</sourceDirectory>
+        <resources>
+            <resource>
+                <directory>backend/src/main/resources</directory>
+            </resource>
+        </resources>
+        <testResources>
+            <testResource>
+                <directory>backend/src/test/resources</directory>
+            </testResource>
+        </testResources>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.acme.subs.SubsApplication</mainClass>
+                </configuration>
             </plugin>
         </plugins>
     </build>
