@@ -12,4 +12,9 @@ public class ApiExceptionHandler {
     public ResponseEntity<?> handleIllegal(IllegalArgumentException e) {
         return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
     }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<?> handleNotFound(NotFoundException e) {
+        return ResponseEntity.notFound().build();
+    }
 }

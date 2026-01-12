@@ -59,6 +59,8 @@ public class Subscription {
     public void setName(String name) { this.name = name; }
     public int getAmountCents() { return amountCents; }
     public void setAmountCents(int amountCents) { this.amountCents = amountCents; }
+    public String getCurrency() { return currency; }
+    public void setCurrency(String currency) { this.currency = currency; }
     public String getBillingCycle() { return billingCycle; }
     public void setBillingCycle(String billingCycle) { this.billingCycle = billingCycle; }
     public Instant getNextRenewalAt() { return nextRenewalAt; }

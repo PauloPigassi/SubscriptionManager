@@ -1,5 +1,6 @@
 package com.acme.subs.catalog;
 
+import com.acme.subs.catalog.dto.CatalogServiceResponse;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,7 +16,22 @@ public class CatalogController {
     }
 
     @GetMapping("/top")
-    public List<CatalogServiceEntity> top() {
-        return repo.findTop().stream().limit(50).toList();
+    public List<CatalogServiceResponse> top() {
+        return repo.findTop().stream()
+                .limit(50)
+                .map(this::toDto)
+                .toList();
+    }
+
+    private CatalogServiceResponse toDto(CatalogServiceEntity entity) {
+        return new CatalogServiceResponse(
+                entity.getId(),
+                entity.getName(),
+                entity.getCategory(),
+                entity.getLogoUrl(),
+                entity.getDefaultPriceCents(),
+                entity.getCurrency(),
+                entity.getPopularityRank()
+        );
     }
 }

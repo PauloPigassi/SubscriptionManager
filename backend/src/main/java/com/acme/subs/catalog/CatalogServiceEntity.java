@@ -31,5 +31,17 @@ public class CatalogServiceEntity {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
+    public CatalogServiceEntity() {
+        // JPA requires no-args constructor
+    }
+
     // getters/setters
+    public UUID getId() { return id; }
+    public String getName() { return name; }
+    public String getCategory() { return category; }
+    public String getLogoUrl() { return logoUrl; }
+    public Integer getDefaultPriceCents() { return defaultPriceCents; }
+    public String getCurrency() { return currency; }
+    public int getPopularityRank() { return popularityRank; }
+    public Instant getCreatedAt() { return createdAt; }
 }

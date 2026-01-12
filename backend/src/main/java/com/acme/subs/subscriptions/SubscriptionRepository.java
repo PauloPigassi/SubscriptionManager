@@ -2,6 +2,7 @@ package com.acme.subs.subscriptions;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -16,5 +17,5 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
       and s.nextRenewalAt >= :from
       and s.nextRenewalAt <= :to
   """)
-    List<Subscription> findActiveWithRenewalBetween(Instant from, Instant to);
+    List<Subscription> findActiveWithRenewalBetween(@Param("from") Instant from, @Param("to") Instant to);
 }
