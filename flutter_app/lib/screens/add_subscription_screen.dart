@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:subscription_manager_flutter/models/catalog_service.dart';
 import 'package:subscription_manager_flutter/services/catalog_service.dart';
 import 'package:subscription_manager_flutter/services/subscription_service.dart';
+import 'package:subscription_manager_flutter/theme/app_theme.dart';
 
 class AddSubscriptionScreen extends StatefulWidget {
   const AddSubscriptionScreen({super.key});
@@ -96,133 +97,177 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Add subscription')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          if (_catalog.isNotEmpty)
-            DropdownButtonFormField<CatalogService>(
-              value: _selectedCatalog,
-              items: _catalog
-                  .map(
-                    (item) => DropdownMenuItem(
-                      value: item,
-                      child: Text(item.name),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedCatalog = value;
-                  _nameController.text = value?.name ?? _nameController.text;
-                  if (value?.defaultPriceCents != null) {
-                    _amountController.text =
-                        (value!.defaultPriceCents! / 100).toStringAsFixed(2);
-                  }
-                });
-              },
-              decoration: const InputDecoration(labelText: 'Catalog service'),
-            ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(labelText: 'Name'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _amountController,
-            decoration: const InputDecoration(labelText: 'Amount (e.g. 29.90)'),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            value: _billingCycle,
-            items: const [
-              DropdownMenuItem(value: 'MONTHLY', child: Text('Monthly')),
-              DropdownMenuItem(value: 'YEARLY', child: Text('Yearly')),
-              DropdownMenuItem(value: 'WEEKLY', child: Text('Weekly')),
-              DropdownMenuItem(value: 'CUSTOM', child: Text('Custom interval')),
-            ],
-            onChanged: (value) {
-              if (value == null) return;
-              setState(() {
-                _billingCycle = value;
-              });
-            },
-            decoration: const InputDecoration(labelText: 'Billing cycle'),
-          ),
-          const SizedBox(height: 12),
-          if (_billingCycle == 'CUSTOM')
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    decoration:
-                        const InputDecoration(labelText: 'Interval count'),
-                    keyboardType: TextInputType.number,
-                    onChanged: (value) {
-                      setState(() {
-                        _intervalCount = int.tryParse(value) ?? 1;
-                      });
-                    },
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.md,
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back,
+                        color: AppColors.textPrimary),
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: _intervalUnit,
+                  Text('Add Subscription', style: textTheme.titleLarge),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                children: [
+                  if (_catalog.isNotEmpty)
+                    DropdownButtonFormField<CatalogService>(
+                      value: _selectedCatalog,
+                      items: _catalog
+                          .map(
+                            (item) => DropdownMenuItem(
+                              value: item,
+                              child: Text(item.name),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedCatalog = value;
+                          _nameController.text =
+                              value?.name ?? _nameController.text;
+                          if (value?.defaultPriceCents != null) {
+                            _amountController.text =
+                                (value!.defaultPriceCents! / 100)
+                                    .toStringAsFixed(2);
+                          }
+                        });
+                      },
+                      decoration:
+                          const InputDecoration(labelText: 'Catalog service'),
+                    ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(labelText: 'Name'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _amountController,
+                    decoration:
+                        const InputDecoration(labelText: 'Amount (e.g. 29.90)'),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: _billingCycle,
                     items: const [
-                      DropdownMenuItem(value: 'MONTH', child: Text('Month')),
-                      DropdownMenuItem(value: 'YEAR', child: Text('Year')),
+                      DropdownMenuItem(
+                          value: 'MONTHLY', child: Text('Monthly')),
+                      DropdownMenuItem(value: 'YEARLY', child: Text('Yearly')),
+                      DropdownMenuItem(value: 'WEEKLY', child: Text('Weekly')),
+                      DropdownMenuItem(
+                          value: 'CUSTOM', child: Text('Custom interval')),
                     ],
                     onChanged: (value) {
                       if (value == null) return;
                       setState(() {
-                        _intervalUnit = value;
+                        _billingCycle = value;
                       });
                     },
                     decoration:
-                        const InputDecoration(labelText: 'Interval unit'),
+                        const InputDecoration(labelText: 'Billing cycle'),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  if (_billingCycle == 'CUSTOM')
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            decoration: const InputDecoration(
+                                labelText: 'Interval count'),
+                            keyboardType: TextInputType.number,
+                            onChanged: (value) {
+                              setState(() {
+                                _intervalCount = int.tryParse(value) ?? 1;
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: _intervalUnit,
+                            items: const [
+                              DropdownMenuItem(
+                                  value: 'MONTH', child: Text('Month')),
+                              DropdownMenuItem(
+                                  value: 'YEAR', child: Text('Year')),
+                            ],
+                            onChanged: (value) {
+                              if (value == null) return;
+                              setState(() {
+                                _intervalUnit = value;
+                              });
+                            },
+                            decoration: const InputDecoration(
+                                labelText: 'Interval unit'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  const SizedBox(height: 12),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Next renewal'),
+                    subtitle: Text(DateFormat.yMMMd().format(_nextRenewal)),
+                    trailing: const Icon(Icons.calendar_today),
+                    onTap: _pickRenewal,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _notesController,
+                    decoration:
+                        const InputDecoration(labelText: 'Notes (optional)'),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  if (_error != null)
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.errorContainer,
+                        borderRadius: AppRadii.md,
+                      ),
+                      child: Text(
+                        _error!,
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.error),
+                      ),
+                    ),
+                  const SizedBox(height: AppSpacing.lg),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _loading ? null : _submit,
+                      child: _loading
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Save Subscription'),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+              ),
             ),
-          const SizedBox(height: 12),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Next renewal'),
-            subtitle: Text(DateFormat.yMMMd().format(_nextRenewal)),
-            trailing: const Icon(Icons.calendar_today),
-            onTap: _pickRenewal,
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _notesController,
-            decoration: const InputDecoration(labelText: 'Notes (optional)'),
-            maxLines: 3,
-          ),
-          const SizedBox(height: 12),
-          if (_error != null)
-            Text(
-              _error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: _loading ? null : _submit,
-              child: _loading
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Save'),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
