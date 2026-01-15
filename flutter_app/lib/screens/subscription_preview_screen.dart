@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:subscription_manager_flutter/screens/dashboard_screen.dart';
+import 'package:subscription_manager_flutter/screens/login_screen.dart';
+import 'package:subscription_manager_flutter/services/auth_storage.dart';
 import 'package:subscription_manager_flutter/theme/app_theme.dart';
-import 'package:subscription_manager_flutter/widgets/app_components.dart';
 
 class SubscriptionPreviewScreen extends StatelessWidget {
   const SubscriptionPreviewScreen({super.key});
@@ -10,10 +12,10 @@ class SubscriptionPreviewScreen extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         child: PageView(
-          children: const [
+          children: [
             _OnboardingPage(),
-            _DashboardPage(),
-            _SubscriptionDetailsPage(),
+            const _DashboardPage(),
+            const _SubscriptionDetailsPage(),
           ],
         ),
       ),
@@ -22,7 +24,83 @@ class SubscriptionPreviewScreen extends StatelessWidget {
 }
 
 class _OnboardingPage extends StatelessWidget {
-  const _OnboardingPage();
+  _OnboardingPage();
+
+  Future<void> _handleGetStarted(BuildContext context) async {
+    final authStorage = AuthStorage();
+    final token = await authStorage.readToken();
+
+    if (!context.mounted) return;
+
+    // Get the navigator reference while context is still valid
+    final navigator = Navigator.of(context);
+
+    if (token != null && token.isNotEmpty) {
+      // User is already logged in, navigate to dashboard
+      navigator.pushReplacement(
+        MaterialPageRoute(
+          builder: (ctx) => DashboardScreen(
+            onLogout: () async {
+              await authStorage.clearToken();
+              // Use the root navigator to navigate
+              if (ctx.mounted) {
+                Navigator.of(ctx, rootNavigator: true).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (loginCtx) => LoginScreen(
+                      onLoggedIn: (token) {
+                        if (loginCtx.mounted) {
+                          Navigator.of(loginCtx, rootNavigator: true)
+                              .pushReplacement(
+                            MaterialPageRoute(
+                              builder: (_) => DashboardScreen(
+                                onLogout: () {},
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
+        ),
+      );
+    } else {
+      // User needs to login
+      navigator.pushReplacement(
+        MaterialPageRoute(
+          builder: (ctx) => LoginScreen(
+            onLoggedIn: (token) async {
+              // Navigate to dashboard after successful login
+              if (ctx.mounted) {
+                Navigator.of(ctx, rootNavigator: true).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (dashCtx) => DashboardScreen(
+                      onLogout: () async {
+                        await authStorage.clearToken();
+                        if (dashCtx.mounted) {
+                          Navigator.of(dashCtx, rootNavigator: true)
+                              .pushReplacement(
+                            MaterialPageRoute(
+                              builder: (_) => LoginScreen(
+                                onLoggedIn: (_) {},
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,12 +153,35 @@ class _OnboardingPage extends StatelessWidget {
             style: textTheme.bodyMedium?.copyWith(height: 1.4),
           ),
           const Spacer(),
-          SizedBox(
-            width: double.infinity,
-            child: PrimaryButton(
-              label: 'Build My Dashboard',
-              icon: Icons.arrow_forward_rounded,
-              onPressed: null,
+          Material(
+            color: AppColors.primary,
+            borderRadius: AppRadii.md,
+            child: InkWell(
+              onTap: () => _handleGetStarted(context),
+              borderRadius: AppRadii.md,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                decoration: BoxDecoration(
+                  borderRadius: AppRadii.md,
+                  boxShadow: AppShadows.soft,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Text(
+                      'Build My Dashboard',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(width: AppSpacing.sm),
+                    Icon(Icons.arrow_forward_rounded, color: Colors.white),
+                  ],
+                ),
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -110,7 +211,8 @@ class _DashboardPage extends StatelessWidget {
             children: [
               RichText(
                 text: TextSpan(
-                  style: textTheme.titleMedium?.copyWith(color: AppColors.textPrimary),
+                  style: textTheme.titleMedium
+                      ?.copyWith(color: AppColors.textPrimary),
                   children: const [
                     TextSpan(text: 'Hello, '),
                     TextSpan(
@@ -126,7 +228,8 @@ class _DashboardPage extends StatelessWidget {
                   CircleAvatar(
                     radius: 18,
                     backgroundColor: AppColors.surface,
-                    child: Icon(Icons.notifications_none, size: 20, color: AppColors.textPrimary),
+                    child: Icon(Icons.notifications_none,
+                        size: 20, color: AppColors.textPrimary),
                   ),
                   SizedBox(width: AppSpacing.sm),
                   CircleAvatar(
@@ -145,11 +248,17 @@ class _DashboardPage extends StatelessWidget {
           Text(r'$428.50', style: textTheme.displaySmall),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            '↓ $48.20 vs last month',
+            'Down \$48.20 vs last month',
             style: textTheme.labelMedium?.copyWith(color: AppColors.accent),
           ),
           const SizedBox(height: AppSpacing.lg),
-          const SectionHeader(title: 'Smart Insights', actionLabel: 'View All'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Smart Insights', style: textTheme.titleMedium),
+              Text('View All', style: textTheme.labelMedium),
+            ],
+          ),
           const SizedBox(height: AppSpacing.md),
           Row(
             children: const [
@@ -175,7 +284,13 @@ class _DashboardPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
-          const SectionHeader(title: 'Upcoming Renewals', actionLabel: 'See All'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Upcoming Renewals', style: textTheme.titleMedium),
+              Text('See All', style: textTheme.labelMedium),
+            ],
+          ),
           const SizedBox(height: AppSpacing.md),
           const _SubscriptionRow(
             title: 'Netflix',
@@ -227,7 +342,8 @@ class _SubscriptionDetailsPage extends StatelessWidget {
               CircleAvatar(
                 radius: 18,
                 backgroundColor: AppColors.surface,
-                child: Icon(Icons.arrow_back, size: 20, color: AppColors.textPrimary),
+                child: Icon(Icons.arrow_back,
+                    size: 20, color: AppColors.textPrimary),
               ),
               Text(
                 'Subscription Details',
@@ -236,7 +352,8 @@ class _SubscriptionDetailsPage extends StatelessWidget {
               CircleAvatar(
                 radius: 18,
                 backgroundColor: AppColors.surface,
-                child: Icon(Icons.more_horiz, size: 20, color: AppColors.textPrimary),
+                child: Icon(Icons.more_horiz,
+                    size: 20, color: AppColors.textPrimary),
               ),
             ],
           ),
@@ -255,7 +372,8 @@ class _SubscriptionDetailsPage extends StatelessWidget {
                   children: [
                     Text('Netflix Premium', style: textTheme.titleMedium),
                     const SizedBox(height: AppSpacing.xs),
-                    Text('Streaming · Family plan', style: textTheme.labelMedium),
+                    Text('Streaming · Family plan',
+                        style: textTheme.labelMedium),
                   ],
                 ),
               ),
@@ -266,8 +384,8 @@ class _SubscriptionDetailsPage extends StatelessWidget {
           Wrap(
             spacing: AppSpacing.sm,
             children: const [
-              AppPill(label: 'Renewing', backgroundColor: Color(0xFFE3F7F3)),
-              AppPill(label: 'Monthly', backgroundColor: Color(0xFFF2F3F7)),
+              _Tag(label: 'Renewing', color: Color(0xFFE3F7F3)),
+              _Tag(label: 'Monthly', color: Color(0xFFF2F3F7)),
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -299,27 +417,49 @@ class _SubscriptionDetailsPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
-          const AppCard(
-            padding: EdgeInsets.zero,
-            child: SizedBox(height: 140, child: _LineChartPlaceholder()),
+          Container(
+            height: 140,
+            decoration: BoxDecoration(
+              borderRadius: AppRadii.md,
+              color: AppColors.surface,
+              boxShadow: AppShadows.subtle,
+            ),
+            child: const _LineChartPlaceholder(),
           ),
           const SizedBox(height: AppSpacing.lg),
-          AppCard(
-            boxShadow: AppShadows.soft,
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: AppRadii.md,
+              boxShadow: AppShadows.soft,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Next Payment', style: textTheme.labelMedium),
                 const SizedBox(height: AppSpacing.sm),
-                Text(r'$15.99', style: textTheme.displaySmall?.copyWith(fontSize: 24)),
+                Text(r'$15.99',
+                    style: textTheme.displaySmall?.copyWith(fontSize: 24)),
                 const SizedBox(height: AppSpacing.xs),
-                Text('Auto-renew on Feb 12, 8:00 AM', style: textTheme.labelMedium),
+                Text('Auto-renew on Feb 12, 8:00 AM',
+                    style: textTheme.labelMedium),
                 const SizedBox(height: AppSpacing.md),
                 Row(
-                  children: const [
-                    Expanded(child: PrimaryButton(label: 'Upgrade', onPressed: null)),
-                    SizedBox(width: AppSpacing.md),
-                    Expanded(child: SecondaryButton(label: 'Pause Plan', onPressed: null)),
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: null,
+                        child: const Text('Upgrade'),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: null,
+                        child: const Text('Pause Plan'),
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -356,7 +496,8 @@ class _StripedCirclePainter extends CustomPainter {
     final radius = size.width / 2;
     canvas.drawCircle(center, radius, circlePaint);
 
-    final clipPath = Path()..addOval(Rect.fromCircle(center: center, radius: radius));
+    final clipPath = Path()
+      ..addOval(Rect.fromCircle(center: center, radius: radius));
     canvas.save();
     canvas.clipPath(clipPath);
 
@@ -446,9 +587,12 @@ class _InsightCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return AppCard(
-      backgroundColor: backgroundColor,
-      boxShadow: const [],
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: AppRadii.md,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -490,7 +634,13 @@ class _SubscriptionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return AppCard(
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: AppRadii.md,
+        boxShadow: AppShadows.subtle,
+      ),
       child: Row(
         children: [
           CircleAvatar(
@@ -514,10 +664,35 @@ class _SubscriptionRow extends StatelessWidget {
             children: [
               Text(price, style: textTheme.labelLarge),
               const SizedBox(height: AppSpacing.xs),
-              Text(change, style: textTheme.labelMedium?.copyWith(color: AppColors.accent)),
+              Text(change,
+                  style:
+                      textTheme.labelMedium?.copyWith(color: AppColors.accent)),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _Tag extends StatelessWidget {
+  const _Tag({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: AppRadii.lg,
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
       ),
     );
   }
@@ -550,12 +725,21 @@ class _PredictionFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: AppSpacing.sm),
-      child: AppPill(
-        label: label,
-        backgroundColor: selected ? AppColors.textPrimary : Colors.transparent,
-        textColor: selected ? Colors.white : AppColors.textSecondary,
+    return Container(
+      margin: const EdgeInsets.only(right: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+      decoration: BoxDecoration(
+        color: selected ? AppColors.textPrimary : Colors.transparent,
+        borderRadius: AppRadii.lg,
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          color: selected ? Colors.white : AppColors.textSecondary,
+          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+        ),
       ),
     );
   }
@@ -573,7 +757,8 @@ class _LineChartPlaceholder extends StatelessWidget {
           Align(
             alignment: Alignment.topRight,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
               decoration: BoxDecoration(
                 color: const Color(0xFFEFF1F7),
                 borderRadius: AppRadii.sm,
