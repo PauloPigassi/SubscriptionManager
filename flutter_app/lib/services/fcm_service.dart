@@ -54,6 +54,41 @@ class FcmService {
         return;
       }
 
+      // On iOS, get APNS token first, then FCM token
+      if (Platform.isIOS) {
+        debugPrint('FCM: Getting APNS token (required for iOS)...');
+
+        // Wait for APNS token with multiple retries
+        String? apnsToken;
+        int retries = 0;
+        const maxRetries = 10;
+        const retryDelay = Duration(milliseconds: 500);
+
+        while (apnsToken == null && retries < maxRetries) {
+          apnsToken = await messaging.getAPNSToken();
+          if (apnsToken != null) {
+            debugPrint(
+                'FCM: ✅ APNS token obtained: ${apnsToken.substring(0, math.min(20, apnsToken.length))}...');
+            break;
+          } else {
+            retries++;
+            if (retries < maxRetries) {
+              debugPrint(
+                  'FCM: ⚠️ APNS token not available yet, retrying... (${retries}/${maxRetries})');
+              await Future.delayed(retryDelay);
+            }
+          }
+        }
+
+        if (apnsToken == null) {
+          debugPrint(
+              'FCM: ⚠️ APNS token not available after ${maxRetries} retries, continuing anyway...');
+          debugPrint(
+              'FCM: This may happen in simulator or if notifications are not fully configured');
+          // Continue anyway - FCM token might still work
+        }
+      }
+
       // Get FCM token
       debugPrint('FCM: Getting FCM token...');
       String? token = await messaging.getToken();
@@ -63,6 +98,19 @@ class FcmService {
         await _registerToken(token);
       } else {
         debugPrint('FCM: ❌ Failed to get FCM token (token is null)');
+        // On iOS, if FCM token is null, try waiting a bit more
+        if (Platform.isIOS) {
+          debugPrint('FCM: Waiting and retrying FCM token on iOS...');
+          await Future.delayed(const Duration(seconds: 2));
+          token = await messaging.getToken();
+          if (token != null) {
+            debugPrint(
+                'FCM: ✅ FCM token obtained after retry: ${token.substring(0, math.min(20, token.length))}...');
+            await _registerToken(token);
+          } else {
+            debugPrint('FCM: ❌ FCM token still null after retry');
+          }
+        }
       }
 
       // Listen for token refresh
