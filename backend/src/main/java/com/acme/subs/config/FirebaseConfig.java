@@ -20,14 +20,21 @@ public class FirebaseConfig {
 
     @PostConstruct
     public void init() throws Exception {
-        if (!enabled) return;
+        if (!enabled) {
+            System.out.println("[FirebaseConfig] ⚠️ Firebase is DISABLED. Notifications will not be sent.");
+            return;
+        }
 
-        if (!FirebaseApp.getApps().isEmpty()) return;
+        if (!FirebaseApp.getApps().isEmpty()) {
+            System.out.println("[FirebaseConfig] ✅ Firebase already initialized");
+            return;
+        }
 
         InputStream is = getClass().getClassLoader()
                 .getResourceAsStream(serviceAccountPath.replace("classpath:", ""));
 
         if (is == null) {
+            System.err.println("[FirebaseConfig] ❌ Firebase service account not found at: " + serviceAccountPath);
             throw new IllegalStateException("Firebase service account not found at: " + serviceAccountPath);
         }
 
@@ -36,5 +43,6 @@ public class FirebaseConfig {
                 .build();
 
         FirebaseApp.initializeApp(options);
+        System.out.println("[FirebaseConfig] ✅ Firebase initialized successfully!");
     }
 }

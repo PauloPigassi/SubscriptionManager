@@ -1,0 +1,51 @@
+{
+  "description": "Exemplo de payload FCM enviado pelo backend",
+  "example": {
+    "token": "dK3xYz9...FCM_TOKEN_DO_DEVICE",
+    "notification": {
+      "title": "Renovação em 7 dias",
+      "body": "Netflix renova em 7 dias (29.90 BRL)"
+    },
+    "data": {
+      "type": "subscription_renewal",
+      "subscriptionId": "550e8400-e29b-41d4-a716-446655440000",
+      "deepLink": "subscriptionmanager://subscription/550e8400-e29b-41d4-a716-446655440000",
+      "click_action": "FLUTTER_NOTIFICATION_CLICK"
+    },
+    "android": {
+      "priority": "high",
+      "notification": {
+        "sound": "default",
+        "channel_id": "subscription_renewals"
+      }
+    },
+    "apns": {
+      "payload": {
+        "aps": {
+          "sound": "default",
+          "badge": 1
+        }
+      }
+    }
+  },
+  "variants": {
+    "today": {
+      "title": "Renovação hoje",
+      "body": "Netflix renova hoje (29.90 BRL)"
+    },
+    "tomorrow": {
+      "title": "Renovação amanhã",
+      "body": "Netflix renova amanhã (29.90 BRL)"
+    },
+    "7_days": {
+      "title": "Renovação em 7 dias",
+      "body": "Netflix renova em 7 dias (29.90 BRL)"
+    }
+  },
+  "notes": [
+    "O campo 'notification' é exibido na barra de notificações",
+    "O campo 'data' contém informações para deep linking",
+    "subscriptionId é usado para navegar para detalhes da subscription",
+    "deepLink segue o formato: subscriptionmanager://subscription/{id}"
+  ]
+}

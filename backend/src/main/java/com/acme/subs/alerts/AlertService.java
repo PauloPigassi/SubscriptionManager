@@ -24,8 +24,11 @@ public class AlertService {
     @Transactional
     public void send(Alert alert) {
         try {
+            System.out.println("[AlertService] Processing alert: " + alert.getId() + " for subscription: " + alert.getSubscriptionId());
+            
             Subscription sub = subRepo.findById(alert.getSubscriptionId()).orElse(null);
             if (sub == null || !sub.isActive()) {
+                System.out.println("[AlertService] ⚠️ Subscription not found or inactive, skipping alert");
                 alert.setStatus("SKIPPED");
                 alertRepo.save(alert);
                 return;
@@ -40,15 +43,19 @@ public class AlertService {
             String title = "Renovação " + when;
             String body = sub.getName() + " renova " + when + " (" + (sub.getAmountCents() / 100.0) + " " + sub.getCurrency() + ")";
 
+            System.out.println("[AlertService] Sending push notification - Title: " + title + " Body: " + body);
             pushSender.sendToUser(alert.getUserId(), title, body, sub.getId());
 
             alert.setStatus("SENT");
             alert.setSentAt(Instant.now());
             alertRepo.save(alert);
+            System.out.println("[AlertService] ✅ Alert sent successfully!");
         } catch (Exception e) {
+            System.err.println("[AlertService] ❌ Failed to send alert: " + e.getMessage());
             alert.setStatus("FAILED");
             alert.setErrorMessage(e.getMessage());
             alertRepo.save(alert);
+            e.printStackTrace();
         }
     }
 }

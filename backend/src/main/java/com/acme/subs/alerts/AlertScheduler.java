@@ -62,6 +62,7 @@ public class AlertScheduler {
     @Scheduled(cron = "0 */5 * * * *")
     public void dispatchPendingAlerts() {
         List<Alert> due = alertRepo.findPendingDue(Instant.now());
+        System.out.println("[AlertScheduler] Found " + due.size() + " pending alerts to dispatch");
         for (Alert a : due) {
             alertService.send(a);
         }

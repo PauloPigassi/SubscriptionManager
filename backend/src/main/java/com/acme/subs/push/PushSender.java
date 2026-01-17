@@ -23,8 +23,13 @@ public class PushSender {
 
     public void sendToUser(UUID userId, String title, String body, UUID subscriptionId) {
         var devices = deviceRepo.findByUserId(userId);
-        if (devices.isEmpty()) return;
+        if (devices.isEmpty()) {
+            System.out.println("[PushSender] No devices found for user: " + userId);
+            return;
+        }
 
+        System.out.println("[PushSender] Sending notification to " + devices.size() + " device(s) for user: " + userId);
+        
         for (var d : devices) {
             if (!enabled) {
                 System.out.println("[FCM disabled] would send to " + d.getPlatform() + " token=" + d.getFcmToken()
@@ -42,9 +47,12 @@ public class PushSender {
                         .putData("subscriptionId", subscriptionId.toString())
                         .build();
 
-                FirebaseMessaging.getInstance().send(msg);
+                String messageId = FirebaseMessaging.getInstance().send(msg);
+                System.out.println("[PushSender] ✅ Notification sent successfully! MessageId: " + messageId 
+                        + " Platform: " + d.getPlatform() + " UserId: " + userId);
             } catch (Exception e) {
-                // no MVP: log
+                System.err.println("[PushSender] ❌ Failed to send notification to " + d.getPlatform() 
+                        + " token: " + d.getFcmToken().substring(0, Math.min(20, d.getFcmToken().length())) + "...");
                 e.printStackTrace();
             }
         }

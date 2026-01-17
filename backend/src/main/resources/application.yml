@@ -24,5 +24,5 @@ app:
     horizonDays: 30
     batchSize: 500
   firebase:
-    enabled: false
+    enabled: true
     serviceAccountPath: "classpath:firebase-service-account.json" # coloque o arquivo depois
