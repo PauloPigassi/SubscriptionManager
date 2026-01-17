@@ -152,7 +152,22 @@ class FcmService {
       debugPrint(
           'FCM: Auth token value: ${authToken != null ? (authToken.isEmpty ? "EMPTY" : "${authToken.substring(0, math.min(10, authToken.length))}...") : "NULL"}');
 
-      if (authToken == null || authToken.isEmpty) {
+      String? resolvedToken = authToken;
+      if (resolvedToken == null || resolvedToken.isEmpty) {
+        debugPrint('FCM: ⚠️ No auth token found, retrying briefly...');
+        const maxRetries = 5;
+        for (var attempt = 1; attempt <= maxRetries; attempt++) {
+          await Future.delayed(const Duration(milliseconds: 200));
+          resolvedToken = await _storage.readToken();
+          if (resolvedToken != null && resolvedToken.isNotEmpty) {
+            debugPrint(
+                'FCM: ✅ Auth token available after retry ${attempt}/${maxRetries}');
+            break;
+          }
+        }
+      }
+
+      if (resolvedToken == null || resolvedToken.isEmpty) {
         debugPrint('FCM: ❌ No auth token, skipping registration');
         debugPrint(
             'FCM: This means the user is not logged in yet or token was not saved properly');
