@@ -54,6 +54,17 @@ class FcmService {
         return;
       }
 
+      if (Platform.isIOS) {
+        debugPrint('FCM: Checking APNS token...');
+        final apnsToken = await messaging.getAPNSToken();
+        if (apnsToken == null) {
+          debugPrint(
+              'FCM: ⚠️ APNS token not set yet; skipping FCM token fetch');
+          return;
+        }
+        debugPrint('FCM: ✅ APNS token is available');
+      }
+
       // Get FCM token
       debugPrint('FCM: Getting FCM token...');
       String? token = await messaging.getToken();
