@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:subscription_manager_flutter/api/api_client.dart';
 import 'package:subscription_manager_flutter/screens/dashboard_screen.dart';
 import 'package:subscription_manager_flutter/screens/login_screen.dart';
 import 'package:subscription_manager_flutter/services/auth_storage.dart';
@@ -10,6 +11,12 @@ import 'package:subscription_manager_flutter/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Simulador iOS: use 127.0.0.1. No dispositivo, use o IP do Mac (api_client.dart).
+  // Para forçar localhost: flutter run --dart-define=USE_LOCALHOST=true
+  if (const bool.fromEnvironment('USE_LOCALHOST', defaultValue: false)) {
+    ApiClient.baseUrlOverride = 'http://127.0.0.1:8080';
+  }
 
   // Initialize Firebase only on iOS/Android (not macOS)
   if (Platform.isIOS || Platform.isAndroid) {

@@ -1,5 +1,8 @@
 server:
   port: 8080
+  # Ouvir em todas as interfaces (0.0.0.0) para aceitar conexões do iPhone/emulador.
+  # Só 127.0.0.1 = só mesmo Mac; 0.0.0.0 = também 192.168.x.x.
+  address: "0.0.0.0"
 
 spring:
   datasource:

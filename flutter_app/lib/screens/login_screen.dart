@@ -31,8 +31,12 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       widget.onLoggedIn(auth.accessToken);
     } catch (error) {
+      String msg = error.toString();
+      if (msg.contains('timeout') || msg.contains('Connection') || msg.contains('SocketException')) {
+        msg = '$msg\n\nDica: mesmo WiFi que o Mac? IP em api_client.dart (ipconfig getifaddr en0)?';
+      }
       setState(() {
-        _error = error.toString();
+        _error = msg;
       });
     } finally {
       if (mounted) {
