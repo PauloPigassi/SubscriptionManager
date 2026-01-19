@@ -14,12 +14,13 @@ class ApiClient {
 
   /// Timeout for the whole HTTP call (request + response)
   static const Duration _timeout = Duration(seconds: 15);
+  static const String _envBaseUrl = String.fromEnvironment('API_BASE_URL');
 
   static http.Client? _client;
   static http.Client get _httpClient {
     _client ??= () {
       final c = HttpClient()
-        ..connectionTimeout = const Duration(seconds: 8)
+        ..connectionTimeout = _timeout
         ..idleTimeout = const Duration(seconds: 10);
       return IOClient(c);
     }();
@@ -32,6 +33,11 @@ class ApiClient {
 
   // For iOS Simulator: 127.0.0.1 works. For iOS device: use Mac's IP (ipconfig getifaddr en0).
   static String get baseUrl {
+    if (_envBaseUrl.isNotEmpty) {
+      return _envBaseUrl.endsWith('/')
+          ? _envBaseUrl.substring(0, _envBaseUrl.length - 1)
+          : _envBaseUrl;
+    }
     if (baseUrlOverride != null && baseUrlOverride!.isNotEmpty) {
       return baseUrlOverride!.endsWith('/')
           ? baseUrlOverride!.substring(0, baseUrlOverride!.length - 1)
