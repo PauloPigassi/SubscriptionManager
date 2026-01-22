@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:subscription_manager_flutter/gen_l10n/app_localizations.dart';
 import 'package:subscription_manager_flutter/services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -49,26 +50,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Create account')),
+      appBar: AppBar(title: Text(l10n.createAccountTitle)),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Name (optional)'),
+              decoration: InputDecoration(labelText: l10n.nameOptional),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
+              decoration: InputDecoration(labelText: l10n.email),
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Password'),
+              decoration: InputDecoration(labelText: l10n.password),
               obscureText: true,
             ),
             const SizedBox(height: 12),
@@ -88,7 +90,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         width: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Register'),
+                    : Text(l10n.register),
               ),
             ),
           ],

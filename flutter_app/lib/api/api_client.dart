@@ -1,10 +1,11 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/io_client.dart';
 import 'package:subscription_manager_flutter/services/auth_storage.dart';
+
+import 'api_client_io.dart' if (dart.library.html) 'api_client_web.dart'
+    as impl;
 
 class ApiClient {
   ApiClient({AuthStorage? authStorage})
@@ -14,36 +15,33 @@ class ApiClient {
 
   /// Timeout for the whole HTTP call (request + response)
   static const Duration _timeout = Duration(seconds: 15);
+  static const String _envBaseUrl =
+      String.fromEnvironment('API_BASE_URL', defaultValue: '');
 
   static http.Client? _client;
-  static http.Client get _httpClient {
-    _client ??= () {
-      final c = HttpClient()
-        ..connectionTimeout = const Duration(seconds: 8)
-        ..idleTimeout = const Duration(seconds: 10);
-      return IOClient(c);
-    }();
-    return _client!;
-  }
 
   /// Override in debug to force a different base URL (e.g. 127.0.0.1 no simulador).
   /// Ex.: ApiClient.baseUrlOverride = 'http://127.0.0.1:8080';
   static String? baseUrlOverride;
 
-  // For iOS Simulator: 127.0.0.1 works. For iOS device: use Mac's IP (ipconfig getifaddr en0).
+  /// Web: localhost:8080. iOS/Android: veja baseUrl.
   static String get baseUrl {
+    if (kIsWeb) return 'http://localhost:8080';
+    if (_envBaseUrl.isNotEmpty) {
+      return _envBaseUrl.endsWith('/')
+          ? _envBaseUrl.substring(0, _envBaseUrl.length - 1)
+          : _envBaseUrl;
+    }
     if (baseUrlOverride != null && baseUrlOverride!.isNotEmpty) {
       return baseUrlOverride!.endsWith('/')
           ? baseUrlOverride!.substring(0, baseUrlOverride!.length - 1)
           : baseUrlOverride!;
     }
-    if (Platform.isIOS) {
+    if (impl.isIOS) {
       const macIp = '192.168.1.5';
       return 'http://$macIp:8080';
     }
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:8080';
-    }
+    if (impl.isAndroid) return 'http://10.0.2.2:8080';
     return 'http://localhost:8080';
   }
 
@@ -69,27 +67,57 @@ class ApiClient {
     final uri = Uri.parse('$baseUrl$path');
     if (kDebugMode) {
       debugPrint('[ApiClient] $method $uri');
+      if (body != null) {
+        debugPrint('[ApiClient] Body: ${jsonEncode(body)}');
+      }
     }
     final headers = await _headers(withAuth: withAuth);
-    try {
-      Future<http.Response> future;
+
+    Future<http.Response> future;
+    if (kIsWeb) {
       switch (method) {
         case 'GET':
-          future = _httpClient.get(uri, headers: headers);
+          future = http.get(uri, headers: headers);
           break;
         case 'POST':
-          future = _httpClient.post(uri, headers: headers, body: body != null ? jsonEncode(body) : null);
+          future = http.post(uri,
+              headers: headers, body: body != null ? jsonEncode(body) : null);
+          break;
+        case 'PATCH':
+          future = http.patch(uri,
+              headers: headers, body: body != null ? jsonEncode(body) : null);
           break;
         case 'DELETE':
-          future = _httpClient.delete(uri, headers: headers);
+          future = http.delete(uri, headers: headers);
           break;
         default:
           throw UnsupportedError('$method');
       }
+    } else {
+      _client ??= impl.createHttpClient();
+      switch (method) {
+        case 'GET':
+          future = _client!.get(uri, headers: headers);
+          break;
+        case 'POST':
+          future = _client!.post(uri,
+              headers: headers, body: body != null ? jsonEncode(body) : null);
+          break;
+        case 'PATCH':
+          future = _client!.patch(uri,
+              headers: headers, body: body != null ? jsonEncode(body) : null);
+          break;
+        case 'DELETE':
+          future = _client!.delete(uri, headers: headers);
+          break;
+        default:
+          throw UnsupportedError('$method');
+      }
+    }
+
+    try {
       final r = await future.timeout(_timeout, onTimeout: () {
-        if (kDebugMode) {
-          debugPrint('[ApiClient] TIMEOUT $method $uri');
-        }
+        if (kDebugMode) debugPrint('[ApiClient] TIMEOUT $method $uri');
         throw Exception('Connection timeout. Backend at $baseUrl? Same WiFi?');
       });
       if (kDebugMode && r.statusCode >= 400) {
@@ -112,6 +140,11 @@ class ApiClient {
   Future<http.Response> post(String path, Object body,
       {bool withAuth = true}) async {
     return _request('POST', path, body: body, withAuth: withAuth);
+  }
+
+  Future<http.Response> patch(String path, Object body,
+      {bool withAuth = true}) async {
+    return _request('PATCH', path, body: body, withAuth: withAuth);
   }
 
   Future<http.Response> delete(String path) async {

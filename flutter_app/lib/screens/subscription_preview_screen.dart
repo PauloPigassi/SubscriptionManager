@@ -54,6 +54,7 @@ class _OnboardingPage extends StatelessWidget {
                             MaterialPageRoute(
                               builder: (_) => DashboardScreen(
                                 onLogout: () {},
+                                onOpenSettings: (_) {},
                               ),
                             ),
                           );
@@ -64,6 +65,7 @@ class _OnboardingPage extends StatelessWidget {
                 );
               }
             },
+            onOpenSettings: (_) {},
           ),
         ),
       );
@@ -91,6 +93,7 @@ class _OnboardingPage extends StatelessWidget {
                           );
                         }
                       },
+                      onOpenSettings: (_) {},
                     ),
                   ),
                 );

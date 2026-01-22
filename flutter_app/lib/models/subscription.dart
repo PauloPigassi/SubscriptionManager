@@ -9,6 +9,7 @@ class Subscription {
     required this.intervalUnit,
     required this.nextRenewalAt,
     this.category,
+    this.notes,
   });
 
   final String id;
@@ -20,6 +21,7 @@ class Subscription {
   final String intervalUnit;
   final DateTime nextRenewalAt;
   final String? category;
+  final String? notes;
 
   factory Subscription.fromJson(Map<String, dynamic> json) {
     return Subscription(
@@ -32,6 +34,7 @@ class Subscription {
       intervalUnit: json['intervalUnit'] as String? ?? 'MONTH',
       nextRenewalAt: DateTime.parse(json['nextRenewalAt'] as String),
       category: json['category'] as String?,
+      notes: json['notes'] as String?,
     );
   }
 }

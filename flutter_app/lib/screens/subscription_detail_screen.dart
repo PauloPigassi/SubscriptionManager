@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:subscription_manager_flutter/gen_l10n/app_localizations.dart';
 import 'package:subscription_manager_flutter/models/subscription.dart';
 import 'package:subscription_manager_flutter/services/subscription_service.dart';
+import 'package:subscription_manager_flutter/utils/currency_format.dart';
 import 'package:subscription_manager_flutter/theme/app_theme.dart';
 
 class SubscriptionDetailScreen extends StatefulWidget {
@@ -53,18 +55,19 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
     }
   }
 
-  String _formatCurrency(int cents, String currency) {
-    final formatter = NumberFormat.simpleCurrency(name: currency);
-    return formatter.format(cents / 100.0);
-  }
+  String _formatCurrency(int cents, String currency) =>
+      formatCurrency(cents, currency);
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
+    final l10n = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context).toString();
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Subscription Details'),
+        title: Text(l10n.subscriptionDetails),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -83,13 +86,13 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
                       const SizedBox(height: AppSpacing.md),
                       ElevatedButton(
                         onPressed: _load,
-                        child: const Text('Retry'),
+                        child: Text(l10n.retry),
                       ),
                     ],
                   ),
                 )
               : _subscription == null
-                  ? const Center(child: Text('Subscription not found'))
+                  ? Center(child: Text(l10n.subscriptionNotFound))
                   : SingleChildScrollView(
                       padding: const EdgeInsets.all(AppSpacing.lg),
                       child: Column(
@@ -101,7 +104,7 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
                           ),
                           const SizedBox(height: AppSpacing.lg),
                           _DetailRow(
-                            label: 'Amount',
+                            label: l10n.amount,
                             value: _formatCurrency(
                               _subscription!.amountCents,
                               _subscription!.currency,
@@ -109,20 +112,20 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
                           ),
                           const SizedBox(height: AppSpacing.md),
                           _DetailRow(
-                            label: 'Billing Cycle',
+                            label: l10n.billingCycleLabel,
                             value: _subscription!.billingCycle,
                           ),
                           const SizedBox(height: AppSpacing.md),
                           _DetailRow(
-                            label: 'Next Renewal',
-                            value: DateFormat.yMMMd().format(
+                            label: l10n.nextRenewalLabel,
+                            value: DateFormat.yMMMd(locale).format(
                               _subscription!.nextRenewalAt,
                             ),
                           ),
                           if (_subscription!.category != null) ...[
                             const SizedBox(height: AppSpacing.md),
                             _DetailRow(
-                              label: 'Category',
+                              label: l10n.category,
                               value: _subscription!.category!,
                             ),
                           ],

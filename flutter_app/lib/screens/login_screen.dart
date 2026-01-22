@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:subscription_manager_flutter/gen_l10n/app_localizations.dart';
 import 'package:subscription_manager_flutter/screens/register_screen.dart';
 import 'package:subscription_manager_flutter/services/auth_service.dart';
 
@@ -31,9 +32,11 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       widget.onLoggedIn(auth.accessToken);
     } catch (error) {
+      if (!mounted) return;
       String msg = error.toString();
+      final l10n = AppLocalizations.of(context)!;
       if (msg.contains('timeout') || msg.contains('Connection') || msg.contains('SocketException')) {
-        msg = '$msg\n\nDica: mesmo WiFi que o Mac? IP em api_client.dart (ipconfig getifaddr en0)?';
+        msg = '$msg\n\n${l10n.loginErrorHint}';
       }
       setState(() {
         _error = msg;
@@ -57,8 +60,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign in')),
+      appBar: AppBar(title: Text(l10n.signIn)),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -66,13 +70,13 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             TextField(
               controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
+              decoration: InputDecoration(labelText: l10n.email),
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Password'),
+              decoration: InputDecoration(labelText: l10n.password),
               obscureText: true,
             ),
             const SizedBox(height: 12),
@@ -92,12 +96,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Login'),
+                    : Text(l10n.login),
               ),
             ),
             TextButton(
               onPressed: _openRegister,
-              child: const Text('Create an account'),
+              child: Text(l10n.createAccount),
             ),
           ],
         ),

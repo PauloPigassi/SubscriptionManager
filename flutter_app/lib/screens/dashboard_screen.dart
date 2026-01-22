@@ -1,29 +1,68 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:subscription_manager_flutter/gen_l10n/app_localizations.dart';
+import 'package:subscription_manager_flutter/utils/currency_format.dart';
 import 'package:subscription_manager_flutter/models/dashboard_summary.dart';
 import 'package:subscription_manager_flutter/screens/subscriptions_screen.dart';
+import 'package:subscription_manager_flutter/screens/notifications_screen.dart';
 import 'package:subscription_manager_flutter/services/dashboard_service.dart';
+import 'package:subscription_manager_flutter/services/notification_storage.dart';
 import 'package:subscription_manager_flutter/theme/app_theme.dart';
+import 'package:subscription_manager_flutter/utils/category_icons.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key, required this.onLogout});
+  const DashboardScreen({
+    super.key,
+    this.displayName,
+    required this.onLogout,
+    required this.onOpenSettings,
+  });
 
+  final String? displayName;
   final VoidCallback onLogout;
+  final void Function(BuildContext context) onOpenSettings;
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen>
+    with WidgetsBindingObserver {
   final _dashboardService = DashboardService();
+  final _notificationStorage = NotificationStorage();
   DashboardSummary? _summary;
   bool _loading = true;
   String? _error;
+  int _unreadCount = 0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
+    _loadUnreadCount();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadUnreadCount();
+    }
+  }
+
+  Future<void> _loadUnreadCount() async {
+    final count = await _notificationStorage.getUnreadCount();
+    if (mounted) {
+      setState(() {
+        _unreadCount = count;
+      });
+    }
   }
 
   Future<void> _load() async {
@@ -50,43 +89,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  String _formatCurrency(int cents, String currency) {
-    final formatter = NumberFormat.simpleCurrency(name: currency);
-    return formatter.format(cents / 100.0);
-  }
+  String _formatCurrency(int cents, String currency) =>
+      formatCurrency(cents, currency);
 
-  String _formatDate(DateTime date) {
+  String _formatDate(BuildContext context, DateTime date) {
+    final l10n = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context).toString();
     final now = DateTime.now();
     final difference = date.difference(now).inDays;
-    if (difference < 0) {
-      return 'Overdue';
-    } else if (difference == 0) {
-      return 'Today';
-    } else if (difference == 1) {
-      return 'Tomorrow';
-    } else {
-      final dateStr = DateFormat('MMM d').format(date);
-      return '$dateStr ($difference days left)';
-    }
+    if (difference < 0) return l10n.overdue;
+    if (difference == 0) return l10n.today;
+    if (difference == 1) return l10n.tomorrow;
+    final dateStr = DateFormat('MMM d', locale).format(date);
+    return '$dateStr (${l10n.daysLeft(difference)})';
   }
 
-  IconData _getCategoryIcon(String? category) {
-    switch (category?.toLowerCase()) {
-      case 'streaming':
-        return Icons.movie_filter_outlined;
-      case 'music':
-        return Icons.headphones_outlined;
-      case 'cloud':
-        return Icons.cloud_outlined;
-      case 'games':
-        return Icons.sports_esports_outlined;
-      default:
-        return Icons.receipt_long_outlined;
-    }
-  }
+  IconData _getCategoryIcon(String? category) =>
+      CategoryIcons.getIcon(category);
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final textTheme = Theme.of(context).textTheme;
     final summary = _summary;
 
@@ -109,18 +132,67 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       text: TextSpan(
                         style: textTheme.titleMedium
                             ?.copyWith(color: AppColors.textPrimary),
-                        children: const [
-                          TextSpan(text: 'Hello, '),
+                        children: [
+                          TextSpan(text: l10n.hello),
                           TextSpan(
-                            text: 'User',
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                            text: widget.displayName?.isNotEmpty == true
+                                ? widget.displayName!
+                                : 'User',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
-                          TextSpan(text: ' 👋'),
+                          const TextSpan(text: ' 👋'),
                         ],
                       ),
                     ),
                     Row(
                       children: [
+                        Stack(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.notifications_outlined,
+                                  size: 22, color: AppColors.textPrimary),
+                              onPressed: () async {
+                                await Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const NotificationsScreen(),
+                                  ),
+                                );
+                                if (!mounted) return;
+                                _loadUnreadCount();
+                              },
+                            ),
+                            if (_unreadCount > 0)
+                              Positioned(
+                                right: 8,
+                                top: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
+                                  child: Text(
+                                    _unreadCount > 99 ? '99+' : '$_unreadCount',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.settings_outlined,
+                              size: 22, color: AppColors.textPrimary),
+                          onPressed: () => widget.onOpenSettings(context),
+                        ),
                         CircleAvatar(
                           radius: 18,
                           backgroundColor: AppColors.surface,
@@ -137,7 +209,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
                 const SizedBox(height: AppSpacing.lg),
-                Text('Monthly Spend', style: textTheme.bodyMedium),
+                Text(l10n.monthlySpend, style: textTheme.bodyMedium),
                 const SizedBox(height: AppSpacing.xs),
                 if (_loading)
                   const LinearProgressIndicator()
@@ -161,15 +233,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Upcoming Renewals', style: textTheme.titleMedium),
+                    Text(l10n.upcomingRenewals, style: textTheme.titleMedium),
                     TextButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
+                      onPressed: () async {
+                        await Navigator.of(context).push(
                           MaterialPageRoute(
                               builder: (_) => const SubscriptionsScreen()),
                         );
+                        if (!mounted) return;
+                        _load();
                       },
-                      child: Text('See All', style: textTheme.labelMedium),
+                      child: Text(l10n.seeAll, style: textTheme.labelMedium),
                     ),
                   ],
                 ),
@@ -186,7 +260,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     child: Center(
                       child: Text(
-                        'No upcoming renewals',
+                        l10n.noUpcomingRenewals,
                         style: textTheme.bodyMedium
                             ?.copyWith(color: AppColors.muted),
                       ),
@@ -224,7 +298,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           style: textTheme.labelLarge),
                                       const SizedBox(height: AppSpacing.xs),
                                       Text(
-                                        'Renews on ${DateFormat('MMM d').format(item.nextRenewalAt)}',
+                                        l10n.renewsOn(DateFormat('MMM d', Localizations.localeOf(context).toString()).format(item.nextRenewalAt)),
                                         style: textTheme.labelMedium,
                                       ),
                                     ],
@@ -240,7 +314,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                     const SizedBox(height: AppSpacing.xs),
                                     Text(
-                                      _formatDate(item.nextRenewalAt),
+                                      _formatDate(context, item.nextRenewalAt),
                                       style: textTheme.labelMedium
                                           ?.copyWith(color: AppColors.accent),
                                     ),
@@ -260,16 +334,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     borderRadius: AppRadii.md,
                     boxShadow: AppShadows.soft,
                   ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) => const SubscriptionsScreen()),
-                        );
-                      },
-                      borderRadius: AppRadii.md,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () async {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const SubscriptionsScreen()),
+                          );
+                          if (!mounted) return;
+                          _load();
+                        },
+                        borderRadius: AppRadii.md,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.lg),
@@ -277,7 +353,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Manage Subscriptions',
+                              l10n.manageSubscriptions,
                               style: textTheme.labelLarge
                                   ?.copyWith(color: Colors.white),
                             ),

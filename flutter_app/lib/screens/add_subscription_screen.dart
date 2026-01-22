@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:subscription_manager_flutter/gen_l10n/app_localizations.dart';
 import 'package:subscription_manager_flutter/models/catalog_service.dart';
+import 'package:subscription_manager_flutter/models/subscription.dart';
 import 'package:subscription_manager_flutter/services/catalog_service.dart';
 import 'package:subscription_manager_flutter/services/subscription_service.dart';
 import 'package:subscription_manager_flutter/theme/app_theme.dart';
+import 'package:subscription_manager_flutter/utils/category_icons.dart';
+import 'package:subscription_manager_flutter/utils/currency_format.dart';
 
 class AddSubscriptionScreen extends StatefulWidget {
-  const AddSubscriptionScreen({super.key});
+  const AddSubscriptionScreen({super.key, this.subscriptionToEdit});
+
+  /// Se preenchido, abre em modo edição.
+  final Subscription? subscriptionToEdit;
 
   @override
   State<AddSubscriptionScreen> createState() => _AddSubscriptionScreenState();
@@ -28,10 +35,35 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
   List<CatalogService> _catalog = const [];
   CatalogService? _selectedCatalog;
 
+  /// null ou "" = sem categoria; "__new__" = nova (usar _customCategory); senão a chave.
+  String? _selectedCategory;
+  String _customCategory = '';
+
   @override
   void initState() {
     super.initState();
     _loadCatalog();
+    final s = widget.subscriptionToEdit;
+    if (s != null) {
+      _nameController.text = s.name;
+      _amountController.text = (s.amountCents / 100).toStringAsFixed(2);
+      _notesController.text = s.notes ?? '';
+      _nextRenewal = s.nextRenewalAt;
+      _billingCycle = s.billingCycle;
+      _intervalCount = s.intervalCount;
+      _intervalUnit = s.intervalUnit;
+      final c = s.category;
+      if (c == null || c.isEmpty) {
+        _selectedCategory = '';
+        _customCategory = '';
+      } else if (CategoryIcons.builtIn.contains(c)) {
+        _selectedCategory = c;
+        _customCategory = '';
+      } else {
+        _selectedCategory = '__new__';
+        _customCategory = c;
+      }
+    }
   }
 
   Future<void> _loadCatalog() async {
@@ -52,20 +84,38 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
       _error = null;
     });
     try {
-      final amountCents = (double.tryParse(_amountController.text) ?? 0) * 100;
-      await _service.create(
-        name: _nameController.text.trim(),
-        amountCents: amountCents.round(),
-        billingCycle: _billingCycle,
-        intervalCount: _intervalCount,
-        intervalUnit: _intervalUnit,
-        nextRenewalAt: _nextRenewal,
-        category: _selectedCatalog?.category,
-        catalogServiceId: _selectedCatalog?.id,
-        notes: _notesController.text.trim().isEmpty
-            ? null
-            : _notesController.text.trim(),
-      );
+      final amountCents = (parseAmount(_amountController.text) * 100).round();
+      final name = _nameController.text.trim();
+      final notes = _notesController.text.trim().isEmpty
+          ? null
+          : _notesController.text.trim();
+      final category = _resolveCategory();
+
+      if (widget.subscriptionToEdit != null) {
+        await _service.updateFull(
+          id: widget.subscriptionToEdit!.id,
+          name: name,
+          amountCents: amountCents,
+          billingCycle: _billingCycle,
+          intervalCount: _intervalCount,
+          intervalUnit: _intervalUnit,
+          nextRenewalAt: _nextRenewal,
+          category: category ?? '',
+          notes: notes ?? '',
+        );
+      } else {
+        await _service.create(
+          name: name,
+          amountCents: amountCents,
+          billingCycle: _billingCycle,
+          intervalCount: _intervalCount,
+          intervalUnit: _intervalUnit,
+          nextRenewalAt: _nextRenewal,
+          category: category,
+          catalogServiceId: _selectedCatalog?.id,
+          notes: notes,
+        );
+      }
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (error) {
@@ -79,6 +129,47 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
         });
       }
     }
+  }
+
+  String? _resolveCategory() {
+    if (_selectedCategory == '__new__') {
+      final t = _customCategory.trim();
+      return t.isEmpty ? null : t;
+    }
+    if (_selectedCategory == null || _selectedCategory!.isEmpty) return null;
+    return _selectedCategory;
+  }
+
+  Widget _buildCategoryField(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        DropdownButtonFormField<String>(
+          value: _selectedCategory ?? '',
+          items: [
+            DropdownMenuItem(value: '', child: Text(l10n.uncategorized)),
+            ...CategoryIcons.builtIn.map((c) => DropdownMenuItem(
+                  value: c,
+                  child: Text(CategoryIcons.displayName(c)),
+                )),
+            DropdownMenuItem(value: '__new__', child: Text(l10n.newCategory)),
+          ],
+          onChanged: (v) => setState(() => _selectedCategory = v),
+          decoration: InputDecoration(labelText: l10n.category),
+        ),
+        if (_selectedCategory == '__new__') ...[
+          const SizedBox(height: 8),
+          TextField(
+            onChanged: (v) => setState(() => _customCategory = v),
+            decoration: InputDecoration(
+              labelText: l10n.newCategory,
+              hintText: 'e.g. Fitness',
+            ),
+          ),
+        ],
+      ],
+    );
   }
 
   Future<void> _pickRenewal() async {
@@ -114,7 +205,12 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                         color: AppColors.textPrimary),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
-                  Text('Add Subscription', style: textTheme.titleLarge),
+                  Text(
+                    widget.subscriptionToEdit != null
+                        ? AppLocalizations.of(context)!.editSubscriptionTitle
+                        : AppLocalizations.of(context)!.addSubscriptionTitle,
+                    style: textTheme.titleLarge,
+                  ),
                 ],
               ),
             ),
@@ -122,7 +218,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 children: [
-                  if (_catalog.isNotEmpty)
+                  if (_catalog.isNotEmpty && widget.subscriptionToEdit == null)
                     DropdownButtonFormField<CatalogService>(
                       value: _selectedCatalog,
                       items: _catalog
@@ -136,6 +232,16 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                       onChanged: (value) {
                         setState(() {
                           _selectedCatalog = value;
+                          final cat = value?.category;
+                          if (cat != null &&
+                              cat.isNotEmpty &&
+                              !CategoryIcons.builtIn
+                                  .contains(cat.toLowerCase())) {
+                            _selectedCategory = '__new__';
+                            _customCategory = cat;
+                          } else {
+                            _selectedCategory = cat?.isEmpty == true ? '' : cat;
+                          }
                           _nameController.text =
                               value?.name ?? _nameController.text;
                           if (value?.defaultPriceCents != null) {
@@ -145,32 +251,41 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                           }
                         });
                       },
-                      decoration:
-                          const InputDecoration(labelText: 'Catalog service'),
+                      decoration: InputDecoration(
+                          labelText:
+                              AppLocalizations.of(context)!.catalogService),
                     ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Name'),
+                    decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.name),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _amountController,
-                    decoration:
-                        const InputDecoration(labelText: 'Amount (e.g. 29.90)'),
+                    decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.amountHint),
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     value: _billingCycle,
-                    items: const [
+                    items: [
                       DropdownMenuItem(
-                          value: 'MONTHLY', child: Text('Monthly')),
-                      DropdownMenuItem(value: 'YEARLY', child: Text('Yearly')),
-                      DropdownMenuItem(value: 'WEEKLY', child: Text('Weekly')),
+                          value: 'MONTHLY',
+                          child: Text(AppLocalizations.of(context)!.monthly)),
                       DropdownMenuItem(
-                          value: 'CUSTOM', child: Text('Custom interval')),
+                          value: 'YEARLY',
+                          child: Text(AppLocalizations.of(context)!.yearly)),
+                      DropdownMenuItem(
+                          value: 'WEEKLY',
+                          child: Text(AppLocalizations.of(context)!.weekly)),
+                      DropdownMenuItem(
+                          value: 'CUSTOM',
+                          child: Text(
+                              AppLocalizations.of(context)!.customInterval)),
                     ],
                     onChanged: (value) {
                       if (value == null) return;
@@ -178,8 +293,8 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                         _billingCycle = value;
                       });
                     },
-                    decoration:
-                        const InputDecoration(labelText: 'Billing cycle'),
+                    decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.billingCycle),
                   ),
                   const SizedBox(height: 12),
                   if (_billingCycle == 'CUSTOM')
@@ -187,8 +302,9 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                       children: [
                         Expanded(
                           child: TextField(
-                            decoration: const InputDecoration(
-                                labelText: 'Interval count'),
+                            decoration: InputDecoration(
+                                labelText: AppLocalizations.of(context)!
+                                    .intervalCount),
                             keyboardType: TextInputType.number,
                             onChanged: (value) {
                               setState(() {
@@ -201,11 +317,15 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                         Expanded(
                           child: DropdownButtonFormField<String>(
                             value: _intervalUnit,
-                            items: const [
+                            items: [
                               DropdownMenuItem(
-                                  value: 'MONTH', child: Text('Month')),
+                                  value: 'MONTH',
+                                  child: Text(
+                                      AppLocalizations.of(context)!.month)),
                               DropdownMenuItem(
-                                  value: 'YEAR', child: Text('Year')),
+                                  value: 'YEAR',
+                                  child:
+                                      Text(AppLocalizations.of(context)!.year)),
                             ],
                             onChanged: (value) {
                               if (value == null) return;
@@ -213,25 +333,30 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                                 _intervalUnit = value;
                               });
                             },
-                            decoration: const InputDecoration(
-                                labelText: 'Interval unit'),
+                            decoration: InputDecoration(
+                                labelText:
+                                    AppLocalizations.of(context)!.intervalUnit),
                           ),
                         ),
                       ],
                     ),
                   const SizedBox(height: 12),
+                  _buildCategoryField(context),
+                  const SizedBox(height: 12),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Next renewal'),
-                    subtitle: Text(DateFormat.yMMMd().format(_nextRenewal)),
+                    title: Text(AppLocalizations.of(context)!.nextRenewal),
+                    subtitle: Text(DateFormat.yMMMd(
+                            Localizations.localeOf(context).toString())
+                        .format(_nextRenewal)),
                     trailing: const Icon(Icons.calendar_today),
                     onTap: _pickRenewal,
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _notesController,
-                    decoration:
-                        const InputDecoration(labelText: 'Notes (optional)'),
+                    decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.notesOptional),
                     maxLines: 3,
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -259,7 +384,8 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                               width: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Save Subscription'),
+                          : Text(
+                              AppLocalizations.of(context)!.saveSubscription),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),

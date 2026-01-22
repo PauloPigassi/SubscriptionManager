@@ -1,11 +1,13 @@
-import 'dart:io';
 import 'dart:math' as math;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:subscription_manager_flutter/api/api_client.dart';
+import 'package:subscription_manager_flutter/core/platform.dart' as platform_impl;
 import 'package:subscription_manager_flutter/services/auth_storage.dart';
+import 'package:subscription_manager_flutter/services/notification_storage.dart';
+import 'package:subscription_manager_flutter/models/notification.dart';
 
 /// Service for handling Firebase Cloud Messaging (FCM)
 class FcmService {
@@ -15,6 +17,7 @@ class FcmService {
 
   final ApiClient _client;
   final AuthStorage _storage;
+  final NotificationStorage _notificationStorage = NotificationStorage();
   FirebaseMessaging? _messaging;
 
   /// Get FirebaseMessaging instance (lazy initialization)
@@ -25,6 +28,7 @@ class FcmService {
 
   /// Initialize FCM and request permissions
   Future<void> initialize() async {
+    if (kIsWeb) return; // FCM não usado na web
     try {
       debugPrint('FCM: Starting initialization...');
 
@@ -55,7 +59,7 @@ class FcmService {
       }
 
       // On iOS, get APNS token first, then FCM token
-      if (Platform.isIOS) {
+      if (platform_impl.isIOS) {
         debugPrint('FCM: Getting APNS token (required for iOS)...');
 
         // Wait for APNS token with multiple retries
@@ -99,7 +103,7 @@ class FcmService {
       } else {
         debugPrint('FCM: ❌ Failed to get FCM token (token is null)');
         // On iOS, if FCM token is null, try waiting a bit more
-        if (Platform.isIOS) {
+        if (platform_impl.isIOS) {
           debugPrint('FCM: Waiting and retrying FCM token on iOS...');
           await Future.delayed(const Duration(seconds: 2));
           token = await messaging.getToken();
@@ -211,31 +215,30 @@ class FcmService {
   }
 
   String _getPlatform() {
-    if (Platform.isIOS) {
-      return 'IOS';
-    } else if (Platform.isAndroid) {
-      return 'ANDROID';
-    } else if (Platform.isMacOS) {
-      return 'MACOS';
-    }
+    if (platform_impl.isIOS) return 'IOS';
+    if (platform_impl.isAndroid) return 'ANDROID';
+    if (platform_impl.isMacOS) return 'MACOS';
     return 'UNKNOWN';
   }
 
   /// Handle foreground messages (when app is open)
-  void _handleForegroundMessage(RemoteMessage message) {
+  void _handleForegroundMessage(RemoteMessage message) async {
     debugPrint('FCM foreground message: ${message.messageId}');
     debugPrint('  Title: ${message.notification?.title}');
     debugPrint('  Body: ${message.notification?.body}');
     debugPrint('  Data: ${message.data}');
 
-    // You can show a local notification or update UI here
-    // For now, we'll just log it
+    // Salva a notificação
+    await _saveNotification(message);
   }
 
   /// Handle notification tap (deep link)
-  void _handleNotificationTap(RemoteMessage message) {
+  void _handleNotificationTap(RemoteMessage message) async {
     debugPrint('FCM notification tapped: ${message.messageId}');
     debugPrint('  Data: ${message.data}');
+
+    // Salva a notificação se ainda não foi salva
+    await _saveNotification(message);
 
     final deepLink = message.data['deepLink'] as String?;
     final subscriptionId = message.data['subscriptionId'] as String?;
@@ -251,6 +254,24 @@ class FcmService {
     // This will be set by the main app
     if (_navigationCallback != null && subscriptionId != null) {
       _navigationCallback!(subscriptionId);
+    }
+  }
+
+  /// Salva uma notificação recebida
+  Future<void> _saveNotification(RemoteMessage message) async {
+    try {
+      final notification = AppNotification(
+        id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        title: message.notification?.title ?? 'Notificação',
+        body: message.notification?.body ?? '',
+        receivedAt: message.sentTime ?? DateTime.now(),
+        subscriptionId: message.data['subscriptionId'] as String?,
+        read: false,
+      );
+      await _notificationStorage.save(notification);
+      debugPrint('FCM: ✅ Notification saved: ${notification.id}');
+    } catch (e) {
+      debugPrint('FCM: ❌ Error saving notification: $e');
     }
   }
 
@@ -273,4 +294,21 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint('  Title: ${message.notification?.title}');
   debugPrint('  Body: ${message.notification?.body}');
   debugPrint('  Data: ${message.data}');
+
+  // Salva a notificação mesmo em background
+  try {
+    final notificationStorage = NotificationStorage();
+    final notification = AppNotification(
+      id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      title: message.notification?.title ?? 'Notificação',
+      body: message.notification?.body ?? '',
+      receivedAt: message.sentTime ?? DateTime.now(),
+      subscriptionId: message.data['subscriptionId'] as String?,
+      read: false,
+    );
+    await notificationStorage.save(notification);
+    debugPrint('FCM: ✅ Background notification saved: ${notification.id}');
+  } catch (e) {
+    debugPrint('FCM: ❌ Error saving background notification: $e');
+  }
 }

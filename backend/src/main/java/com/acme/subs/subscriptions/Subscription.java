@@ -71,4 +71,13 @@ public class Subscription {
     public void setIntervalCount(int intervalCount) { this.intervalCount = intervalCount; }
     public String getIntervalUnit() { return intervalUnit; }
     public void setIntervalUnit(String intervalUnit) { this.intervalUnit = intervalUnit; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+    public UUID getCatalogServiceId() { return catalogServiceId; }
+    public void setCatalogServiceId(UUID catalogServiceId) { this.catalogServiceId = catalogServiceId; }
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
+    public Instant getCreatedAt() { return createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 }

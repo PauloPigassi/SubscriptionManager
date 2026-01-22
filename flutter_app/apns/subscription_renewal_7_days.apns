@@ -1,0 +1,15 @@
+{
+  "Simulator Target Bundle": "com.seuapp.subscriptionmanager",
+  "aps": {
+    "alert": {
+      "title": "Renovação em 7 dias",
+      "body": "Netflix renova em 7 dias (29.90 BRL)"
+    },
+    "sound": "default",
+    "badge": 1
+  },
+  "type": "subscription_renewal",
+  "subscriptionId": "550e8400-e29b-41d4-a716-446655440000",
+  "deepLink": "subscriptionmanager://subscription/550e8400-e29b-41d4-a716-446655440000",
+  "click_action": "FLUTTER_NOTIFICATION_CLICK"
+}

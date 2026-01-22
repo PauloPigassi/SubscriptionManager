@@ -98,6 +98,12 @@
       "languageVersion": "3.8"
     },
     {
+      "name": "flutter_localizations",
+      "rootUri": "file:///opt/homebrew/share/flutter/packages/flutter_localizations",
+      "packageUri": "lib/",
+      "languageVersion": "3.8"
+    },
+    {
       "name": "flutter_test",
       "rootUri": "file:///opt/homebrew/share/flutter/packages/flutter_test",
       "packageUri": "lib/",
@@ -123,9 +129,9 @@
     },
     {
       "name": "intl",
-      "rootUri": "file:///Users/paulopigassi/.pub-cache/hosted/pub.dev/intl-0.19.0",
+      "rootUri": "file:///Users/paulopigassi/.pub-cache/hosted/pub.dev/intl-0.20.2",
       "packageUri": "lib/",
-      "languageVersion": "3.0"
+      "languageVersion": "3.3"
     },
     {
       "name": "leak_tracker",
