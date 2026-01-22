@@ -17,6 +17,7 @@
         <jjwt.version>0.11.5</jjwt.version>
         <springdoc.version>2.6.0</springdoc.version>
         <firebase.version>9.2.0</firebase.version>
+        <aws.sdk.version>2.25.62</aws.sdk.version>
     </properties>
 
     <dependencyManagement>
@@ -102,6 +103,13 @@
             <groupId>com.google.firebase</groupId>
             <artifactId>firebase-admin</artifactId>
             <version>${firebase.version}</version>
+        </dependency>
+
+        <!-- AWS S3 (icons upload) -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>${aws.sdk.version}</version>
         </dependency>
 
         <!-- Lombok (opcional) -->

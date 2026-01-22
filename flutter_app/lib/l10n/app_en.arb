@@ -70,6 +70,7 @@
   "save": "Save",
   "categoryUpdated": "Category updated",
   "subscriptionUpdated": "Subscription updated",
+  "iconUrlOptional": "Icon URL (optional)",
 
   "settings": "Settings",
   "language": "Language",

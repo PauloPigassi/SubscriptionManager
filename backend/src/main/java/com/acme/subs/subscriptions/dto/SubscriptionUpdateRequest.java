@@ -11,5 +11,6 @@ public record SubscriptionUpdateRequest(
         @JsonProperty("intervalUnit") String intervalUnit,
         @JsonProperty("nextRenewalAt") Instant nextRenewalAt,
         @JsonProperty("category") String category,
-        @JsonProperty("notes") String notes
+        @JsonProperty("notes") String notes,
+        @JsonProperty("iconUrl") String iconUrl
 ) {}

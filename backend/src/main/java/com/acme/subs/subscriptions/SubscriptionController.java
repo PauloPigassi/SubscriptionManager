@@ -1,6 +1,8 @@
 package com.acme.subs.subscriptions;
 
 import com.acme.subs.subscriptions.dto.SubscriptionCreateRequest;
+import com.acme.subs.subscriptions.dto.SubscriptionIconUploadRequest;
+import com.acme.subs.subscriptions.dto.SubscriptionIconUploadResponse;
 import com.acme.subs.subscriptions.dto.SubscriptionUpdateRequest;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
@@ -38,6 +40,16 @@ public class SubscriptionController {
         System.out.println("[DEBUG] Update request - name: " + req.name() + ", amountCents: " + req.amountCents() + 
             ", billingCycle: " + req.billingCycle() + ", category: " + req.category());
         return service.update(userId, id, req);
+    }
+
+    @PostMapping("/{id}/icon-upload")
+    public SubscriptionIconUploadResponse createIconUpload(
+            Authentication auth,
+            @PathVariable("id") UUID id,
+            @Valid @RequestBody SubscriptionIconUploadRequest req
+    ) {
+        UUID userId = (UUID) auth.getPrincipal();
+        return service.createIconUpload(userId, id, req);
     }
 
     @DeleteMapping("/{id}")
