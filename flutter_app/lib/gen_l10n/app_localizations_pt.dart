@@ -160,8 +160,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get notesOptional => 'Observações (opcional)';
-  @override
-  String get iconUrlOptional => 'URL do ícone (opcional)';
 
   @override
   String get saveSubscription => 'Salvar assinatura';
@@ -210,6 +208,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get subscriptionUpdated => 'Assinatura atualizada';
+
+  @override
+  String get iconUrlOptional => 'URL do ícone (opcional)';
 
   @override
   String get settings => 'Configurações';

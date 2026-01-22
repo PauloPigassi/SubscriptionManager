@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 import jakarta.annotation.PostConstruct;
+import java.io.FileInputStream;
 import java.io.InputStream;
 
 @Configuration
@@ -30,12 +31,26 @@ public class FirebaseConfig {
             return;
         }
 
-        InputStream is = getClass().getClassLoader()
-                .getResourceAsStream(serviceAccountPath.replace("classpath:", ""));
-
-        if (is == null) {
-            System.err.println("[FirebaseConfig] ❌ Firebase service account not found at: " + serviceAccountPath);
-            throw new IllegalStateException("Firebase service account not found at: " + serviceAccountPath);
+        InputStream is;
+        
+        // Suporta classpath: ou caminho absoluto de arquivo
+        if (serviceAccountPath.startsWith("classpath:")) {
+            String resourcePath = serviceAccountPath.replace("classpath:", "");
+            is = getClass().getClassLoader().getResourceAsStream(resourcePath);
+            if (is == null) {
+                System.err.println("[FirebaseConfig] ❌ Firebase service account not found in classpath: " + resourcePath);
+                throw new IllegalStateException("Firebase service account not found in classpath: " + resourcePath);
+            }
+            System.out.println("[FirebaseConfig] Loading Firebase service account from classpath: " + resourcePath);
+        } else {
+            // Caminho absoluto de arquivo (ex: /app/firebase-service-account.json)
+            try {
+                is = new FileInputStream(serviceAccountPath);
+                System.out.println("[FirebaseConfig] Loading Firebase service account from file: " + serviceAccountPath);
+            } catch (Exception e) {
+                System.err.println("[FirebaseConfig] ❌ Firebase service account file not found: " + serviceAccountPath);
+                throw new IllegalStateException("Firebase service account file not found: " + serviceAccountPath, e);
+            }
         }
 
         FirebaseOptions options = FirebaseOptions.builder()

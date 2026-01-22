@@ -6,9 +6,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/subsdb
-    username: subs
-    password: subs
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/subsdb}
+    username: ${SPRING_DATASOURCE_USERNAME:subs}
+    password: ${SPRING_DATASOURCE_PASSWORD:subs}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -20,12 +20,12 @@ spring:
 
 app:
   jwt:
-    secret: "CHANGE_ME_TO_A_LONG_RANDOM_SECRET_64+"
-    issuer: "subs-app"
-    accessTokenMinutes: 60
+    secret: ${APP_JWT_SECRET:CHANGE_ME_TO_A_LONG_RANDOM_SECRET_64+}
+    issuer: ${APP_JWT_ISSUER:subs-app}
+    accessTokenMinutes: ${APP_JWT_ACCESS_TOKEN_MINUTES:60}
   scheduler:
-    horizonDays: 30
-    batchSize: 500
+    horizonDays: ${APP_SCHEDULER_HORIZON_DAYS:30}
+    batchSize: ${APP_SCHEDULER_BATCH_SIZE:500}
   firebase:
-    enabled: true
-    serviceAccountPath: "classpath:firebase-service-account.json" # coloque o arquivo depois
+    enabled: ${APP_FIREBASE_ENABLED:false}
+    serviceAccountPath: ${APP_FIREBASE_SERVICE_ACCOUNT_PATH:classpath:firebase-service-account.json}

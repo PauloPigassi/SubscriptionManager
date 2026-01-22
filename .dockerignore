@@ -1,0 +1,32 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# Build artifacts
+target/
+backend/target/
+*.jar
+*.war
+
+# Flutter
+flutter_app/
+
+# Documentation
+*.md
+!README.md
+
+# Docker
+docker-compose.yml
+Dockerfile
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
