@@ -160,6 +160,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notesOptional => 'Notes (optional)';
+  @override
+  String get iconUrlOptional => 'Icon URL (optional)';
 
   @override
   String get saveSubscription => 'Save Subscription';

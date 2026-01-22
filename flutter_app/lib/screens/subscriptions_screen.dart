@@ -71,6 +71,23 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
   IconData _getCategoryIcon(String? category) =>
       CategoryIcons.getIcon(category);
 
+  Widget _buildSubscriptionIcon(Subscription subscription) {
+    final iconUrl = subscription.iconUrl;
+    final hasIcon = iconUrl != null && iconUrl.isNotEmpty;
+    return CircleAvatar(
+      radius: 18,
+      backgroundColor: AppColors.background,
+      backgroundImage: hasIcon ? NetworkImage(iconUrl) : null,
+      child: hasIcon
+          ? null
+          : Icon(
+              _getCategoryIcon(subscription.category),
+              size: 18,
+              color: AppColors.textPrimary,
+            ),
+    );
+  }
+
   Future<void> _archive(Subscription subscription) async {
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
@@ -359,19 +376,8 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
                                               ),
                                               child: Row(
                                                 children: [
-                                                  CircleAvatar(
-                                                    radius: 18,
-                                                    backgroundColor:
-                                                        AppColors.background,
-                                                    child: Icon(
-                                                      _getCategoryIcon(
-                                                          subscription
-                                                              .category),
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.textPrimary,
-                                                    ),
-                                                  ),
+                                                  _buildSubscriptionIcon(
+                                                      subscription),
                                                   const SizedBox(
                                                       width: AppSpacing.md),
                                                   Expanded(

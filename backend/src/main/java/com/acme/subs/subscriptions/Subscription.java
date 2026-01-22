@@ -45,6 +45,9 @@ public class Subscription {
 
     private String notes;
 
+    @Column(name = "icon_url")
+    private String iconUrl;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
@@ -77,6 +80,8 @@ public class Subscription {
     public void setCatalogServiceId(UUID catalogServiceId) { this.catalogServiceId = catalogServiceId; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+    public String getIconUrl() { return iconUrl; }
+    public void setIconUrl(String iconUrl) { this.iconUrl = iconUrl; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }

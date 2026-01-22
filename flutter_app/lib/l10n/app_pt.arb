@@ -66,6 +66,7 @@
   "editCategory": "Alterar categoria",
   "editSubscription": "Editar assinatura",
   "editSubscriptionTitle": "Editar assinatura",
+  "iconUrlOptional": "URL do ícone (opcional)",
   "save": "Salvar",
   "categoryUpdated": "Categoria atualizada",
   "subscriptionUpdated": "Assinatura atualizada",

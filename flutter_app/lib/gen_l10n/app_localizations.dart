@@ -380,6 +380,12 @@ abstract class AppLocalizations {
   /// **'Notes (optional)'**
   String get notesOptional;
 
+  /// No description provided for @iconUrlOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon URL (optional)'**
+  String get iconUrlOptional;
+
   /// No description provided for @saveSubscription.
   ///
   /// In en, this message translates to:

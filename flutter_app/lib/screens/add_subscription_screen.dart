@@ -25,6 +25,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
   final _nameController = TextEditingController();
   final _amountController = TextEditingController();
   final _notesController = TextEditingController();
+  final _iconUrlController = TextEditingController();
 
   bool _loading = false;
   String? _error;
@@ -48,6 +49,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
       _nameController.text = s.name;
       _amountController.text = (s.amountCents / 100).toStringAsFixed(2);
       _notesController.text = s.notes ?? '';
+      _iconUrlController.text = s.iconUrl ?? '';
       _nextRenewal = s.nextRenewalAt;
       _billingCycle = s.billingCycle;
       _intervalCount = s.intervalCount;
@@ -89,6 +91,9 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
       final notes = _notesController.text.trim().isEmpty
           ? null
           : _notesController.text.trim();
+      final iconUrl = _iconUrlController.text.trim().isEmpty
+          ? null
+          : _iconUrlController.text.trim();
       final category = _resolveCategory();
 
       if (widget.subscriptionToEdit != null) {
@@ -102,6 +107,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
           nextRenewalAt: _nextRenewal,
           category: category ?? '',
           notes: notes ?? '',
+          iconUrl: iconUrl ?? '',
         );
       } else {
         await _service.create(
@@ -114,6 +120,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
           category: category,
           catalogServiceId: _selectedCatalog?.id,
           notes: notes,
+          iconUrl: iconUrl,
         );
       }
       if (!mounted) return;
@@ -188,6 +195,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
       body: SafeArea(
@@ -207,8 +215,8 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                   ),
                   Text(
                     widget.subscriptionToEdit != null
-                        ? AppLocalizations.of(context)!.editSubscriptionTitle
-                        : AppLocalizations.of(context)!.addSubscriptionTitle,
+                        ? l10n.editSubscriptionTitle
+                        : l10n.addSubscriptionTitle,
                     style: textTheme.titleLarge,
                   ),
                 ],
@@ -252,20 +260,17 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                         });
                       },
                       decoration: InputDecoration(
-                          labelText:
-                              AppLocalizations.of(context)!.catalogService),
+                          labelText: l10n.catalogService),
                     ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _nameController,
-                    decoration: InputDecoration(
-                        labelText: AppLocalizations.of(context)!.name),
+                    decoration: InputDecoration(labelText: l10n.name),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _amountController,
-                    decoration: InputDecoration(
-                        labelText: AppLocalizations.of(context)!.amountHint),
+                    decoration: InputDecoration(labelText: l10n.amountHint),
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
                   ),
@@ -275,17 +280,16 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                     items: [
                       DropdownMenuItem(
                           value: 'MONTHLY',
-                          child: Text(AppLocalizations.of(context)!.monthly)),
+                          child: Text(l10n.monthly)),
                       DropdownMenuItem(
                           value: 'YEARLY',
-                          child: Text(AppLocalizations.of(context)!.yearly)),
+                          child: Text(l10n.yearly)),
                       DropdownMenuItem(
                           value: 'WEEKLY',
-                          child: Text(AppLocalizations.of(context)!.weekly)),
+                          child: Text(l10n.weekly)),
                       DropdownMenuItem(
                           value: 'CUSTOM',
-                          child: Text(
-                              AppLocalizations.of(context)!.customInterval)),
+                          child: Text(l10n.customInterval)),
                     ],
                     onChanged: (value) {
                       if (value == null) return;
@@ -293,8 +297,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                         _billingCycle = value;
                       });
                     },
-                    decoration: InputDecoration(
-                        labelText: AppLocalizations.of(context)!.billingCycle),
+                    decoration: InputDecoration(labelText: l10n.billingCycle),
                   ),
                   const SizedBox(height: 12),
                   if (_billingCycle == 'CUSTOM')
@@ -303,8 +306,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                         Expanded(
                           child: TextField(
                             decoration: InputDecoration(
-                                labelText: AppLocalizations.of(context)!
-                                    .intervalCount),
+                                labelText: l10n.intervalCount),
                             keyboardType: TextInputType.number,
                             onChanged: (value) {
                               setState(() {
@@ -320,12 +322,10 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                             items: [
                               DropdownMenuItem(
                                   value: 'MONTH',
-                                  child: Text(
-                                      AppLocalizations.of(context)!.month)),
+                                  child: Text(l10n.month)),
                               DropdownMenuItem(
                                   value: 'YEAR',
-                                  child:
-                                      Text(AppLocalizations.of(context)!.year)),
+                                  child: Text(l10n.year)),
                             ],
                             onChanged: (value) {
                               if (value == null) return;
@@ -334,8 +334,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                               });
                             },
                             decoration: InputDecoration(
-                                labelText:
-                                    AppLocalizations.of(context)!.intervalUnit),
+                                labelText: l10n.intervalUnit),
                           ),
                         ),
                       ],
@@ -345,7 +344,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                   const SizedBox(height: 12),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(AppLocalizations.of(context)!.nextRenewal),
+                    title: Text(l10n.nextRenewal),
                     subtitle: Text(DateFormat.yMMMd(
                             Localizations.localeOf(context).toString())
                         .format(_nextRenewal)),
@@ -354,9 +353,13 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                   ),
                   const SizedBox(height: 12),
                   TextField(
+                    controller: _iconUrlController,
+                    decoration: InputDecoration(labelText: l10n.iconUrlOptional),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
                     controller: _notesController,
-                    decoration: InputDecoration(
-                        labelText: AppLocalizations.of(context)!.notesOptional),
+                    decoration: InputDecoration(labelText: l10n.notesOptional),
                     maxLines: 3,
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -385,7 +388,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : Text(
-                              AppLocalizations.of(context)!.saveSubscription),
+                              l10n.saveSubscription),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),

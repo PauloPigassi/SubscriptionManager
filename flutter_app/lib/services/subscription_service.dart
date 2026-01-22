@@ -29,6 +29,7 @@ class SubscriptionService {
     String? category,
     String? catalogServiceId,
     String? notes,
+    String? iconUrl,
   }) async {
     final response = await _client.post('/v1/subscriptions', {
       'catalogServiceId': catalogServiceId,
@@ -40,6 +41,7 @@ class SubscriptionService {
       'intervalUnit': intervalUnit,
       'nextRenewalAt': nextRenewalAt.toUtc().toIso8601String(),
       'notes': notes,
+      'iconUrl': iconUrl,
     });
     if (response.statusCode != 200) {
       throw Exception('Failed to create subscription (${response.statusCode})');
@@ -66,6 +68,7 @@ class SubscriptionService {
     DateTime? nextRenewalAt,
     String? category,
     String? notes,
+    String? iconUrl,
   }) async {
     final body = <String, dynamic>{};
     if (name != null) body['name'] = name;
@@ -78,6 +81,7 @@ class SubscriptionService {
     }
     if (category != null) body['category'] = category;
     if (notes != null) body['notes'] = notes;
+    if (iconUrl != null) body['iconUrl'] = iconUrl;
     if (body.isEmpty) return;
     final response = await _client.patch('/v1/subscriptions/$id', body);
     if (response.statusCode != 200) {
@@ -96,6 +100,7 @@ class SubscriptionService {
     required DateTime nextRenewalAt,
     required String category,
     required String notes,
+    required String iconUrl,
   }) async {
     final body = <String, dynamic>{
       'name': name,
@@ -106,6 +111,7 @@ class SubscriptionService {
       'nextRenewalAt': nextRenewalAt.toUtc().toIso8601String(),
       'category': category,
       'notes': notes,
+      'iconUrl': iconUrl,
     };
     // Debug: log do body sendo enviado
     print('[DEBUG] updateFull body: $body');

@@ -13,5 +13,6 @@ public record SubscriptionCreateRequest(
         int intervalCount,
         String intervalUnit,
         @NotNull Instant nextRenewalAt,
-        String notes
+        String notes,
+        String iconUrl
 ) {}
