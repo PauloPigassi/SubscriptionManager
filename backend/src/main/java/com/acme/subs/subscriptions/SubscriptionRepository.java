@@ -11,6 +11,8 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
 
     List<Subscription> findByUserIdAndActiveTrueOrderByNextRenewalAtAsc(UUID userId);
 
+    List<Subscription> findByActiveTrueAndNextRenewalAtBefore(Instant cutoff);
+
     @Query("""
     select s from Subscription s
     where s.active = true

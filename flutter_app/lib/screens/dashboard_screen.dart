@@ -213,13 +213,22 @@ class _DashboardScreenState extends State<DashboardScreen>
                 const SizedBox(height: AppSpacing.xs),
                 if (_loading)
                   const LinearProgressIndicator()
-                else if (summary != null)
+                else if (summary != null) ...[
                   Text(
                     _formatCurrency(
                         summary.monthlyTotalCents, summary.currency),
                     style: textTheme.displaySmall,
-                  )
-                else
+                  ),
+                  if (summary.yearlyTotalCents > 0) ...[
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      l10n.yearlySpend(_formatCurrency(
+                          summary.yearlyTotalCents, summary.currency)),
+                      style: textTheme.labelMedium
+                          ?.copyWith(color: AppColors.muted),
+                    ),
+                  ],
+                ] else
                   Text('--', style: textTheme.displaySmall),
                 if (_error != null) ...[
                   const SizedBox(height: AppSpacing.xs),
@@ -325,6 +334,13 @@ class _DashboardScreenState extends State<DashboardScreen>
                           ),
                         ),
                       ),
+                if (summary != null &&
+                    summary.categoryBreakdown.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(l10n.spendingByCategory, style: textTheme.titleMedium),
+                  const SizedBox(height: AppSpacing.md),
+                  _CategoryBreakdownCard(summary: summary),
+                ],
                 const SizedBox(height: AppSpacing.lg),
                 Container(
                   width: double.infinity,
@@ -370,6 +386,74 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CategoryBreakdownCard extends StatelessWidget {
+  const _CategoryBreakdownCard({required this.summary});
+
+  final DashboardSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final textTheme = Theme.of(context).textTheme;
+    final total = summary.monthlyTotalCents;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: AppRadii.md,
+        boxShadow: AppShadows.subtle,
+      ),
+      child: Column(
+        children: [
+          for (final (index, item) in summary.categoryBreakdown.indexed) ...[
+            if (index > 0) const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Icon(CategoryIcons.getIcon(item.category),
+                    size: 18, color: AppColors.textSecondary),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.category == null
+                            ? l10n.uncategorized
+                            : CategoryIcons.displayName(item.category!),
+                        style: textTheme.labelLarge,
+                      ),
+                      Text(
+                        l10n.subscriptionCount(item.count),
+                        style: textTheme.labelMedium
+                            ?.copyWith(color: AppColors.muted),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  formatCurrency(item.monthlyCents, summary.currency),
+                  style: textTheme.labelLarge,
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            ClipRRect(
+              borderRadius: AppRadii.sm,
+              child: LinearProgressIndicator(
+                value: total > 0 ? item.monthlyCents / total : 0,
+                minHeight: 6,
+                backgroundColor: AppColors.divider,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

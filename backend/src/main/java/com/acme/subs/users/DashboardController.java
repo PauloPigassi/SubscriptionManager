@@ -1,5 +1,6 @@
 package com.acme.subs.users;
 
+import com.acme.subs.subscriptions.BillingCycles;
 import com.acme.subs.subscriptions.SubscriptionRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -25,9 +26,32 @@ public class DashboardController {
         var subs = subRepo.findByUserIdAndActiveTrueOrderByNextRenewalAtAsc(userId);
 
         long monthlyTotalCents = 0;
+        long yearlyTotalCents = 0;
+        // categoria normalizada (minúsculas) -> [monthlyCents, count]; null = sem categoria
+        Map<String, long[]> byCategory = new HashMap<>();
         for (var s : subs) {
-            monthlyTotalCents += estimateMonthlyCents(s.getAmountCents(), s.getBillingCycle(), s.getIntervalCount(), s.getIntervalUnit());
+            long monthly = BillingCycles.monthlyCents(s.getAmountCents(), s.getBillingCycle(), s.getIntervalCount(), s.getIntervalUnit());
+            monthlyTotalCents += monthly;
+            yearlyTotalCents += BillingCycles.yearlyCents(s.getAmountCents(), s.getBillingCycle(), s.getIntervalCount(), s.getIntervalUnit());
+
+            String category = s.getCategory() == null || s.getCategory().isBlank()
+                    ? null
+                    : s.getCategory().trim().toLowerCase();
+            long[] acc = byCategory.computeIfAbsent(category, k -> new long[2]);
+            acc[0] += monthly;
+            acc[1] += 1;
         }
+
+        List<Map<String, Object>> categoryBreakdown = new ArrayList<>();
+        byCategory.entrySet().stream()
+                .sorted((a, b) -> Long.compare(b.getValue()[0], a.getValue()[0]))
+                .forEach(e -> {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("category", e.getKey());
+                    item.put("monthlyCents", e.getValue()[0]);
+                    item.put("count", e.getValue()[1]);
+                    categoryBreakdown.add(item);
+                });
 
         Instant now = Instant.now();
         Instant sevenDays = now.plus(7, ChronoUnit.DAYS);
@@ -39,23 +63,11 @@ public class DashboardController {
 
         Map<String, Object> out = new HashMap<>();
         out.put("monthlyTotalCents", monthlyTotalCents);
+        out.put("yearlyTotalCents", yearlyTotalCents);
         out.put("currency", "BRL");
         out.put("nextRenewals", next7);
         out.put("activeCount", subs.size());
+        out.put("categoryBreakdown", categoryBreakdown);
         return out;
-    }
-
-    private long estimateMonthlyCents(int amountCents, String billingCycle, int intervalCount, String intervalUnit) {
-        return switch (billingCycle) {
-            case "MONTHLY" -> amountCents;
-            case "YEARLY" -> Math.round(amountCents / 12.0);
-            case "WEEKLY" -> Math.round(amountCents * 4.345); // média semanas/mês
-            case "CUSTOM" -> {
-                if ("YEAR".equalsIgnoreCase(intervalUnit)) yield Math.round(amountCents / (12.0 * intervalCount));
-                // MONTH
-                yield Math.round(amountCents / (double) intervalCount);
-            }
-            default -> amountCents;
-        };
     }
 }

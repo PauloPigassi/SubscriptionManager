@@ -259,4 +259,49 @@ class AppLocalizationsPt extends AppLocalizations {
   String daysAgo(int count) {
     return '$count dias atrás';
   }
+
+  @override
+  String yearlySpend(String amount) {
+    return '≈ $amount por ano';
+  }
+
+  @override
+  String get spendingByCategory => 'Gastos por categoria';
+
+  @override
+  String subscriptionCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count assinaturas',
+      one: '1 assinatura',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reminders => 'Lembretes de renovação';
+
+  @override
+  String get remindersDesc => 'Receba uma notificação antes de cada renovação';
+
+  @override
+  String get reminderOnDay => 'No dia da renovação';
+
+  @override
+  String reminderDaysBefore(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dias antes',
+      one: '1 dia antes',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get remindersLoadFailed => 'Não foi possível carregar os lembretes';
+
+  @override
+  String get remindersSaveFailed => 'Não foi possível salvar os lembretes';
 }

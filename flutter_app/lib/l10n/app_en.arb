@@ -89,5 +89,18 @@
   "@hoursAgo": { "placeholders": { "count": { "type": "int" } } },
   "yesterday": "Yesterday",
   "daysAgo": "{count} days ago",
-  "@daysAgo": { "placeholders": { "count": { "type": "int" } } }
+  "@daysAgo": { "placeholders": { "count": { "type": "int" } } },
+
+  "yearlySpend": "≈ {amount} per year",
+  "@yearlySpend": {"placeholders": {"amount": {"type": "String"}}},
+  "spendingByCategory": "Spending by Category",
+  "subscriptionCount": "{count, plural, =1{1 subscription} other{{count} subscriptions}}",
+  "@subscriptionCount": {"placeholders": {"count": {"type": "int"}}},
+  "reminders": "Renewal reminders",
+  "remindersDesc": "Get a push notification before each renewal",
+  "reminderOnDay": "On renewal day",
+  "reminderDaysBefore": "{count, plural, =1{1 day before} other{{count} days before}}",
+  "@reminderDaysBefore": {"placeholders": {"count": {"type": "int"}}},
+  "remindersLoadFailed": "Could not load reminders",
+  "remindersSaveFailed": "Could not save reminders"
 }

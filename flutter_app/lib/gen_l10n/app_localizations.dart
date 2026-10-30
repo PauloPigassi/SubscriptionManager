@@ -565,6 +565,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} days ago'**
   String daysAgo(int count);
+
+  /// No description provided for @yearlySpend.
+  ///
+  /// In en, this message translates to:
+  /// **'≈ {amount} per year'**
+  String yearlySpend(String amount);
+
+  /// No description provided for @spendingByCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending by Category'**
+  String get spendingByCategory;
+
+  /// No description provided for @subscriptionCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 subscription} other{{count} subscriptions}}'**
+  String subscriptionCount(int count);
+
+  /// No description provided for @reminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Renewal reminders'**
+  String get reminders;
+
+  /// No description provided for @remindersDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Get a push notification before each renewal'**
+  String get remindersDesc;
+
+  /// No description provided for @reminderOnDay.
+  ///
+  /// In en, this message translates to:
+  /// **'On renewal day'**
+  String get reminderOnDay;
+
+  /// No description provided for @reminderDaysBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day before} other{{count} days before}}'**
+  String reminderDaysBefore(int count);
+
+  /// No description provided for @remindersLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load reminders'**
+  String get remindersLoadFailed;
+
+  /// No description provided for @remindersSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save reminders'**
+  String get remindersSaveFailed;
 }
 
 class _AppLocalizationsDelegate

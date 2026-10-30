@@ -6,4 +6,6 @@ import java.util.UUID;
 
 public interface AlertRuleRepository extends JpaRepository<AlertRule, UUID> {
     List<AlertRule> findByUserIdAndEnabledTrue(UUID userId);
+
+    List<AlertRule> findByUserIdOrderByDaysBeforeDesc(UUID userId);
 }

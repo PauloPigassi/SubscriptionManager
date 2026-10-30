@@ -88,5 +88,15 @@
   "@hoursAgo": { "placeholders": { "count": { "type": "int" } } },
   "yesterday": "Ontem",
   "daysAgo": "{count} dias atrás",
-  "@daysAgo": { "placeholders": { "count": { "type": "int" } } }
+  "@daysAgo": { "placeholders": { "count": { "type": "int" } } },
+
+  "yearlySpend": "≈ {amount} por ano",
+  "spendingByCategory": "Gastos por categoria",
+  "subscriptionCount": "{count, plural, =1{1 assinatura} other{{count} assinaturas}}",
+  "reminders": "Lembretes de renovação",
+  "remindersDesc": "Receba uma notificação antes de cada renovação",
+  "reminderOnDay": "No dia da renovação",
+  "reminderDaysBefore": "{count, plural, =1{1 dia antes} other{{count} dias antes}}",
+  "remindersLoadFailed": "Não foi possível carregar os lembretes",
+  "remindersSaveFailed": "Não foi possível salvar os lembretes"
 }

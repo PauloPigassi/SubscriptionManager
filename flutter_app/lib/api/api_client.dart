@@ -87,6 +87,10 @@ class ApiClient {
           future = http.patch(uri,
               headers: headers, body: body != null ? jsonEncode(body) : null);
           break;
+        case 'PUT':
+          future = http.put(uri,
+              headers: headers, body: body != null ? jsonEncode(body) : null);
+          break;
         case 'DELETE':
           future = http.delete(uri, headers: headers);
           break;
@@ -105,6 +109,10 @@ class ApiClient {
           break;
         case 'PATCH':
           future = _client!.patch(uri,
+              headers: headers, body: body != null ? jsonEncode(body) : null);
+          break;
+        case 'PUT':
+          future = _client!.put(uri,
               headers: headers, body: body != null ? jsonEncode(body) : null);
           break;
         case 'DELETE':
@@ -145,6 +153,11 @@ class ApiClient {
   Future<http.Response> patch(String path, Object body,
       {bool withAuth = true}) async {
     return _request('PATCH', path, body: body, withAuth: withAuth);
+  }
+
+  Future<http.Response> put(String path, Object body,
+      {bool withAuth = true}) async {
+    return _request('PUT', path, body: body, withAuth: withAuth);
   }
 
   Future<http.Response> delete(String path) async {
